@@ -20,17 +20,14 @@ import kotlin.random.Random
 import kotlin.streams.toList
 import kotlin.system.exitProcess
 
-fun main(args: Array<String>) {
-    val learningLeague = LearningLeague()
-    learningLeague.go()
-}
-
 class Player(var pieceValues: IntArray, var points: Int) {
 
     override fun toString(): String {
         return pieceValues.take(5).joinToString(" ", transform = { it.toString().padStart(6) } )
     }
 }
+
+const val GAME_ERROR = -1
 
 class LearningLeague {
 
@@ -69,6 +66,7 @@ class LearningLeague {
                 when (playGame(players.get(white), players.get(black))) {
                     WHITE_WIN -> players.get(white).points += 2
                     BLACK_WIN -> players.get(black).points += 2
+                    GAME_ERROR -> { }
                     else -> {
                         players.get(white).points++
                         players.get(black).points++
@@ -148,18 +146,18 @@ class LearningLeague {
                 if (searcher.engineBoard.previousOccurrencesOfThisPosition() > 2) return THREE_FOLD
                 searcher.go()
             } catch (e: Exception) {
-                println(e)
-                println("Board: ${searcher.engineBoard}")
-                println("GA Move List: " + moveList.stream().map { EngineMove(it).toString() }.toList().toString())
-                println("Piece Values: " + pieceValue(BITBOARD_WP) + "," +
+                outln(e.toString())
+                outln("Board: ${searcher.engineBoard}")
+                outln("GA Move List: " + moveList.stream().map { EngineMove(it).toString() }.toList().toString())
+                outln("Piece Values: " + pieceValue(BITBOARD_WP) + "," +
                         "" + pieceValue(BITBOARD_WN) + "," +
                         "" + pieceValue(BITBOARD_WB) + "," +
                         "" + pieceValue(BITBOARD_WR) + "," +
                         "" + pieceValue(BITBOARD_WQ) + "," +
                         "" + pieceValue(BITBOARD_WK) + ","
                 )
-                println("Moves: " + searcher.engineBoard.moveGenerator().generateLegalMoves().moves.toList().stream().map { EngineMove(it).toString() }.toList().toString())
-                exitProcess(1)
+                outln("Moves: " + searcher.engineBoard.moveGenerator().generateLegalMoves().moves.toList().stream().map { EngineMove(it).toString() }.toList().toString())
+                return GAME_ERROR
             }
             moveList.add(searcher.currentMove)
             board = Board.fromMove(board, getMoveRefFromCompactMove(searcher.currentMove))
