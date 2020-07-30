@@ -1,0 +1,14 @@
+.DS_Store
+.settings/
+.project
+.buildpath
+.classpath
+.gradle/
+*.log
+/bin/
+.idea/
+build/
+dist/
+gradle.properties
+newfile.epd
+
