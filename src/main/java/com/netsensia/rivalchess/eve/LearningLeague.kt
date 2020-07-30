@@ -2,9 +2,11 @@ package com.netsensia.rivalchess.eve
 
 import com.netsensia.rivalchess.config.MAX_SEARCH_DEPTH
 import com.netsensia.rivalchess.config.MAX_SEARCH_MILLIS
-import com.netsensia.rivalchess.consts.FEN_START_POS
+import com.netsensia.rivalchess.consts.*
+import com.netsensia.rivalchess.engine.eval.pieceValue
 import com.netsensia.rivalchess.engine.eval.pieceValues
 import com.netsensia.rivalchess.engine.search.Search
+import com.netsensia.rivalchess.engine.type.EngineMove
 import com.netsensia.rivalchess.model.Board
 import com.netsensia.rivalchess.model.Colour
 import com.netsensia.rivalchess.model.util.BoardUtils.getLegalMoves
@@ -15,6 +17,8 @@ import java.lang.System.currentTimeMillis
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.random.Random
+import kotlin.streams.toList
+import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
     val learningLeague = LearningLeague()
@@ -58,15 +62,6 @@ class LearningLeague {
         outln()
     }
 
-//    Current Champion (22):
-//    172    267    343    314    124
-//    Longest Game: 345
-//    ==================================================
-//    21 29 10 31 5 26 14 25 2 27 7 15 30 24 6 11 4 20 28 3 18 9 13 12 java.lang.ArrayIndexOutOfBoundsException: -1
-//    Board: rn2k2r/pbpp1Nbp/1p6/3p4/Q1P1NB1q/8/PP2PnPP/R3KB1R b KQkq - 4 12
-//    Move: 0 = 0-0
-//    Piece Values: 172,310,347,376,127,30000,
-//    Moves: ,, ,, ,, ,, ,, ,, ,, ,, ,, ,, ,, ,, ,,
     private fun playAllOpponentsAsWhite(white: Int) {
         out("$white ")
         (0 until numPlayers).toList().parallelStream().forEach { black ->
@@ -146,12 +141,26 @@ class LearningLeague {
             if (moveNumber > longestGame) longestGame = moveNumber
             val searcher = getSearcher(if (moveNumber % 2 == 1) whitePlayer else blackPlayer)
 
-            searcher.engineBoard.ga_debugMoveList = moveList
-            moveList.forEach { searcher.makeMove(it) }
+            try {
+                moveList.forEach { searcher.makeMove(it) }
 
-            if (searcher.engineBoard.halfMoveCount > 50) return FIFTY_MOVE
-            if (searcher.engineBoard.previousOccurrencesOfThisPosition() > 2) return THREE_FOLD
-            searcher.go()
+                if (searcher.engineBoard.halfMoveCount > 50) return FIFTY_MOVE
+                if (searcher.engineBoard.previousOccurrencesOfThisPosition() > 2) return THREE_FOLD
+                searcher.go()
+            } catch (e: Exception) {
+                println(e)
+                println("Board: ${searcher.engineBoard}")
+                println("GA Move List: " + moveList.stream().map { EngineMove(it).toString() }.toList().toString())
+                println("Piece Values: " + pieceValue(BITBOARD_WP) + "," +
+                        "" + pieceValue(BITBOARD_WN) + "," +
+                        "" + pieceValue(BITBOARD_WB) + "," +
+                        "" + pieceValue(BITBOARD_WR) + "," +
+                        "" + pieceValue(BITBOARD_WQ) + "," +
+                        "" + pieceValue(BITBOARD_WK) + ","
+                )
+                println("Moves: " + searcher.engineBoard.moveGenerator().generateLegalMoves().moves.toList().stream().map { EngineMove(it).toString() }.toList().toString())
+                exitProcess(1)
+            }
             moveList.add(searcher.currentMove)
             board = Board.fromMove(board, getMoveRefFromCompactMove(searcher.currentMove))
             moveNumber ++
