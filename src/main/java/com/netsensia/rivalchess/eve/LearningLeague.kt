@@ -32,12 +32,12 @@ const val GAME_ERROR = -1
 class LearningLeague {
 
     private var longestGame = 0
-    private val numPlayers = 64
+    private val numPlayers = 40
     private val nodesToSearch = 5000
     private val numGenerations = 2000
     private val file = File("log/ga " + currentTimeMillis() + ".txt")
     private val rng = Random(21)
-    private val sampleEvery = 10
+    private val sampleEvery = 2
 
     var players: MutableList<Player> = mutableListOf()
 
@@ -125,6 +125,11 @@ class LearningLeague {
         players.forEach { outln(it.toString()) }
         outln("Current Champion ($generation):")
         outln(sortedPlayers[0].toString())
+        outln("Average:")
+        (0..4).forEach { pieceIndex ->
+            out(players.stream().mapToInt{ player -> player.pieceValues[pieceIndex] }.average().asDouble.toInt().toString().padStart(6, ' ') + " ")
+        }
+        outln()
         outln("Longest Game: ${longestGame}")
         outln("".padStart(50, '='))
     }
@@ -199,7 +204,7 @@ class LearningLeague {
     }
 
     private fun outln() {
-        out("")
+        outln("")
     }
 
     private fun createGenerationZero() {
