@@ -61,7 +61,7 @@ class LearningLeague {
 
     private fun playAllOpponentsAsWhite(white: Int) {
         out("$white ")
-        (0 until numPlayers).toList().stream().forEach { black ->
+        (0 until numPlayers).toList().parallelStream().forEach { black ->
             if (white != black && (1..sampleEvery).random(rng) == 1) {
                 when (playGame(players.get(white), players.get(black))) {
                     WHITE_WIN -> players.get(white).points += 2
