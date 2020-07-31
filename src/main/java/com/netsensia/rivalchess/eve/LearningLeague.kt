@@ -61,7 +61,7 @@ class LearningLeague {
 
     private fun playAllOpponentsAsWhite(white: Int) {
         out("$white ")
-        (0 until numPlayers).toList().parallelStream().forEach { black ->
+        (0 until numPlayers).toList().stream().forEach { black ->
             if (white != black && (1..sampleEvery).random(rng) == 1) {
                 when (playGame(players.get(white), players.get(black))) {
                     WHITE_WIN -> players.get(white).points += 2
@@ -159,6 +159,7 @@ class LearningLeague {
                 outln("Moves: " + searcher.engineBoard.moveGenerator().generateLegalMoves().moves.toList().stream().map { EngineMove(it).toString() }.toList().toString())
                 return GAME_ERROR
             }
+            if (searcher.currentMove == 0) return GAME_ERROR
             moveList.add(searcher.currentMove)
             board = Board.fromMove(board, getMoveRefFromCompactMove(searcher.currentMove))
             moveNumber ++
