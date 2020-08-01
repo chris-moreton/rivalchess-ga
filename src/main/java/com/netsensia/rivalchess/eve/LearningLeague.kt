@@ -95,14 +95,13 @@ class LearningLeague {
             val newPlayer = getPlayer(totalPoints, sortedPlayers)
 
             for (k in 0 until 5) {
-                if ((0..3).random(rng) == 0) {
+                if ((0..2).random(rng) == 0) {
                     // a small number per generation may have a mutation of up to 20 percent,
                     // other mutations will be up to 5 percent
-                    val randSize = if ((0 until numPlayers).random() == 0) 20 else 5
-                    var adjustment = (newPlayer.pieceValues[k]).toDouble() * (
-                            (1..randSize).random(rng).toDouble() / 100.0)
-                    if ((0..1).random(rng) == 0) adjustment = -adjustment
-                    newPlayer.pieceValues[k] += adjustment.toInt()
+                    val randSize = if ((0 until numPlayers).random() == 0) 25 else
+                        (if ((0 until numPlayers).random() == 0) 15 else 5)
+                    val adjustment = (newPlayer.pieceValues[k]).toDouble() * ((1..randSize).random(rng).toDouble() / 100.0)
+                    newPlayer.pieceValues[k] += (if ((0..1).random(rng) == 0) adjustment else -adjustment).toInt()
                 }
             }
 
