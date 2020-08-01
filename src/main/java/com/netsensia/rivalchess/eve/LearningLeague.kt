@@ -18,7 +18,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.random.Random
 import kotlin.streams.toList
-import kotlin.system.exitProcess
 
 class Player(var pieceValues: IntArray, var points: Int) {
 
@@ -32,12 +31,13 @@ const val GAME_ERROR = -1
 class LearningLeague {
 
     private var longestGame = 0
-    private val numPlayers = 40
+    private val numPlayers = 24
     private val nodesToSearch = 5000
     private val numGenerations = 2000
     private val file = File("log/ga " + currentTimeMillis() + ".txt")
     private val rng = Random(21)
-    private val sampleEvery = 2
+    private val sampleEvery = 1
+    private val mutateEvery = 15
 
     var players: MutableList<Player> = mutableListOf()
 
@@ -90,25 +90,47 @@ class LearningLeague {
         val sortedPlayers = players.sortedBy { -it.points }
         val totalPoints: Int = players.map { it.points }.sum()
 
-        players = mutableListOf()
+        val newPlayerList = mutableListOf<Player>()
         for (i in 0 until numPlayers) {
-            val newPlayer = getPlayer(totalPoints, sortedPlayers)
+            val player1 = getPlayer(totalPoints, sortedPlayers)
+            val player2 = getPlayer(totalPoints, sortedPlayers)
 
-            for (k in 0 until 5) {
-                if ((0..2).random(rng) == 0) {
-                    // a small number per generation may have a mutation of up to 20 percent,
-                    // other mutations will be up to 5 percent
-                    val randSize = if ((0 until numPlayers).random() == 0) 25 else
-                        (if ((0 until numPlayers).random() == 0) 15 else 5)
-                    val adjustment = (newPlayer.pieceValues[k]).toDouble() * ((1..randSize).random(rng).toDouble() / 100.0)
-                    newPlayer.pieceValues[k] += (if ((0..1).random(rng) == 0) adjustment else -adjustment).toInt()
-                }
-            }
-
-            players.add(newPlayer)
+            newPlayerList.add(mutate(crossover(player1, player2)))
         }
 
+        players = newPlayerList
         displayGenerationResults(sortedPlayers, generation)
+    }
+
+    private fun mutate(player: Player): Player {
+        val newPlayer = Player(player.pieceValues.copyOf(), 0)
+
+        for (k in 0 until 5) {
+            if ((0 until mutateEvery).random(rng) == 0) {
+                val adjustment = (player.pieceValues[k]).toDouble() * ((1..mutationSize()).random(rng).toDouble() / 100.0)
+                newPlayer.pieceValues[k] += (if ((0..1).random(rng) == 0) adjustment else -adjustment).toInt()
+            }
+        }
+
+        return newPlayer
+    }
+
+    private fun mutationSize(): Int {
+        return when ((0 until 10).random(rng)) {
+            9 -> 20
+            6, 7, 8 -> 10
+            else -> 5
+        }
+    }
+
+    private fun crossover(player1: Player, player2: Player): Player {
+        val newPlayer = Player(player1.pieceValues.copyOf(), 0)
+
+        for (i in 0 until 5)
+            if ((0..1).random(rng) == 0)
+                newPlayer.pieceValues[i] = player2.pieceValues[i]
+
+        return newPlayer
     }
 
     private fun displayGenerationResults(sortedPlayers: List<Player>, generation: Int) {
