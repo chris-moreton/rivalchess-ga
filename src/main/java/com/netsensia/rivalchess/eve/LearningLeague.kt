@@ -31,9 +31,9 @@ const val GAME_ERROR = -1
 class LearningLeague {
 
     private var longestGame = 0
-    private val numPlayers = 24
-    private val nodesToSearch = 5000
-    private val numGenerations = 2000
+    private val numPlayers = 4
+    private val nodesToSearch = 10000
+    private val numGenerations = 20000
     private val file = File("log/ga " + currentTimeMillis() + ".txt")
     private val rng = Random(21)
     private val sampleEvery = 1
@@ -64,8 +64,8 @@ class LearningLeague {
         (0 until numPlayers).toList().parallelStream().forEach { black ->
             if (white != black && (1..sampleEvery).random(rng) == 1) {
                 when (playGame(players.get(white), players.get(black))) {
-                    WHITE_WIN -> players.get(white).points += 2
-                    BLACK_WIN -> players.get(black).points += 2
+                    WHITE_WIN -> players.get(white).points += 3
+                    BLACK_WIN -> players.get(black).points += 3
                     GAME_ERROR -> { }
                     else -> {
                         players.get(white).points++
@@ -151,6 +151,27 @@ class LearningLeague {
             out(players.stream().mapToInt{ player -> player.pieceValues[pieceIndex] }.average().asDouble.toInt().toString().padStart(6, ' ') + " ")
         }
         outln()
+        outln("".padStart(50, '-'))
+        val classicRival = Player(intArrayOf(100,390,390,595,1175,30000), 0)
+        val challenger = Player(sortedPlayers[0].pieceValues.copyOf(), 0)
+        (0 until 20).toList().parallelStream().forEach {
+            val challengerIsWhite = it % 2 == 0
+            val whitePlayer = if (challengerIsWhite) challenger else classicRival
+            val blackPlayer = if (!challengerIsWhite) challenger else classicRival
+            when (playGame(whitePlayer, blackPlayer)) {
+                WHITE_WIN -> whitePlayer.points += 3
+                BLACK_WIN -> blackPlayer.points += 3
+                GAME_ERROR -> { }
+                else -> {
+                    whitePlayer.points++
+                    blackPlayer.points++
+                }
+            }
+
+        }
+        outln("Challenger versus Rival: ${challenger.points} - ${classicRival.points}")
+
+        outln("".padStart(50, '='))
         outln("Longest Game: ${longestGame}")
         outln("".padStart(50, '='))
     }
@@ -206,12 +227,13 @@ class LearningLeague {
         return searcher
     }
 
-    private fun displayResults(players: List<Player>, generation: Int) {
+    private fun displayResults(sortedPlayers: List<Player>, generation: Int) {
         outln()
         outln("".padStart(50, '='))
         outln("Generation $generation Results")
-        outln("".padStart(50, '='))
-        players.forEach { outln(it.toString()) }
+        outln("".padStart(50, '-'))
+        sortedPlayers.forEach { outln(it.toString()) }
+
     }
 
     private fun out(str: String) {
