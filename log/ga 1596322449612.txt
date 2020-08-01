@@ -1,0 +1,27 @@
+Piece Value GA Results
+1 0 
+
+==================================================
+Generation 0 Results
+--------------------------------------------------
+   233    245    344    112    398
+   414    315    276    200    413
+==================================================
+2020-08-01 23:54:12.933
+The Next Generation:
+==================================================
+   233    245    344    112    398
+   233    245    344    105    398
+Current Champion (0):
+   233    245    344    112    398
+Average:
+   233    245    344    108    398 
+--------------------------------------------------
+Challenger wins as white
+r1bn3k/ppp3pp/5R2/8/2BP4/8/PPP3PK/RNB5 w - - 0 17
+Challenger wins as white
+2Q3bk/p4Bpp/8/2p5/8/8/PP1N2PP/R6K w - - 0 32
+Challenger wins as white
+3R4/5Qp1/7k/p6p/7P/8/PPK1PPP1/5B2 w - - 4 35
+Challenger wins as black
+8/p2k1p2/3P2pp/5p1b/2p5/4b3/3r4/4K3 b - - 7 44

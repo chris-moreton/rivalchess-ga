@@ -3,6 +3,7 @@ package com.netsensia.rivalchess.eve
 import com.netsensia.rivalchess.config.MAX_SEARCH_DEPTH
 import com.netsensia.rivalchess.config.MAX_SEARCH_MILLIS
 import com.netsensia.rivalchess.consts.*
+import com.netsensia.rivalchess.engine.board.makeMove
 import com.netsensia.rivalchess.engine.eval.pieceValue
 import com.netsensia.rivalchess.engine.eval.pieceValues
 import com.netsensia.rivalchess.engine.search.Search
@@ -31,13 +32,14 @@ const val GAME_ERROR = -1
 class LearningLeague {
 
     private var longestGame = 0
-    private val numPlayers = 4
+    private val numPlayers = 12
     private val nodesToSearch = 10000
     private val numGenerations = 20000
     private val file = File("log/ga " + currentTimeMillis() + ".txt")
     private val rng = Random(21)
-    private val sampleEvery = 1
+    private val sampleEvery = 2
     private val mutateEvery = 15
+    private val challengerGames = 15
 
     var players: MutableList<Player> = mutableListOf()
 
@@ -53,7 +55,7 @@ class LearningLeague {
 
     private fun roundRobin() {
         outln()
-        (0 until numPlayers).toList().parallelStream().forEach { white ->
+        (0 until numPlayers).toList().stream().forEach { white ->
             playAllOpponentsAsWhite(white)
         }
         outln()
@@ -61,7 +63,7 @@ class LearningLeague {
 
     private fun playAllOpponentsAsWhite(white: Int) {
         out("$white ")
-        (0 until numPlayers).toList().parallelStream().forEach { black ->
+        (0 until numPlayers).toList().stream().forEach { black ->
             if (white != black && (1..sampleEvery).random(rng) == 1) {
                 when (playGame(players.get(white), players.get(black))) {
                     WHITE_WIN -> players.get(white).points += 3
@@ -152,66 +154,60 @@ class LearningLeague {
         }
         outln()
         outln("".padStart(50, '-'))
-        val classicRival = Player(intArrayOf(100,390,390,595,1175,30000), 0)
-        val challenger = Player(sortedPlayers[0].pieceValues.copyOf(), 0)
-        (0 until 20).toList().parallelStream().forEach {
-            val challengerIsWhite = it % 2 == 0
-            val whitePlayer = if (challengerIsWhite) challenger else classicRival
-            val blackPlayer = if (!challengerIsWhite) challenger else classicRival
-            when (playGame(whitePlayer, blackPlayer)) {
-                WHITE_WIN -> whitePlayer.points += 3
-                BLACK_WIN -> blackPlayer.points += 3
-                GAME_ERROR -> { }
-                else -> {
-                    whitePlayer.points++
-                    blackPlayer.points++
-                }
-            }
-
-        }
-        outln("Challenger versus Rival: ${challenger.points} - ${classicRival.points}")
+        challengerVersusRival(sortedPlayers)
 
         outln("".padStart(50, '='))
         outln("Longest Game: ${longestGame}")
         outln("".padStart(50, '='))
     }
 
-    private fun playGame(whitePlayer: Player, blackPlayer: Player): Int {
+    private fun challengerVersusRival(sortedPlayers: List<Player>) {
+        val classicRival = Player(intArrayOf(100, 390, 390, 595, 1175, 30000), 0)
+        val challenger = Player(sortedPlayers[0].pieceValues.copyOf(), 1000)
+        (0 until challengerGames).toList().stream().forEach {
+            val challengerIsWhite = it % 2 == 0
+            val whitePlayer = if (challengerIsWhite) challenger else classicRival
+            val blackPlayer = if (!challengerIsWhite) challenger else classicRival
+            when (playGame(whitePlayer, blackPlayer, if (challengerIsWhite) WHITE_WIN else BLACK_WIN)) {
+                WHITE_WIN -> whitePlayer.points ++
+                BLACK_WIN -> blackPlayer.points ++
+            }
+
+        }
+        outln("Challenger versus Rival: ${challenger.points} - ${classicRival.points}")
+    }
+
+    private fun playGame(whitePlayer: Player, blackPlayer: Player, showIfResultIs: Int = -1): Int {
 
         val moveList = mutableListOf<Int>()
         var board = Board.fromFen(FEN_START_POS)
 
         var moveNumber = 1
+        var searcher: Search = Search()
         while (board.getLegalMoves().isNotEmpty()) {
             if (moveNumber > longestGame) longestGame = moveNumber
-            val searcher = getSearcher(if (moveNumber % 2 == 1) whitePlayer else blackPlayer)
+            searcher = getSearcher(if (moveNumber % 2 == 1) whitePlayer else blackPlayer)
 
-            try {
-                moveList.forEach { searcher.makeMove(it) }
+            moveList.forEach { searcher.makeMove(it) }
 
-                if (searcher.engineBoard.halfMoveCount > 50) return FIFTY_MOVE
-                if (searcher.engineBoard.previousOccurrencesOfThisPosition() > 2) return THREE_FOLD
-                searcher.go()
-            } catch (e: Exception) {
-                outln(e.toString())
-                outln("Board: ${searcher.engineBoard}")
-                outln("GA Move List: " + moveList.stream().map { EngineMove(it).toString() }.toList().toString())
-                outln("Piece Values: " + pieceValue(BITBOARD_WP) + "," +
-                        "" + pieceValue(BITBOARD_WN) + "," +
-                        "" + pieceValue(BITBOARD_WB) + "," +
-                        "" + pieceValue(BITBOARD_WR) + "," +
-                        "" + pieceValue(BITBOARD_WQ) + "," +
-                        "" + pieceValue(BITBOARD_WK) + ","
-                )
-                outln("Moves: " + searcher.engineBoard.moveGenerator().generateLegalMoves().moves.toList().stream().map { EngineMove(it).toString() }.toList().toString())
-                return GAME_ERROR
-            }
+            if (searcher.engineBoard.halfMoveCount > 50) return FIFTY_MOVE
+            if (searcher.engineBoard.previousOccurrencesOfThisPosition() > 2) return THREE_FOLD
+            searcher.go()
+
             if (searcher.currentMove == 0) return GAME_ERROR
             moveList.add(searcher.currentMove)
             board = Board.fromMove(board, getMoveRefFromCompactMove(searcher.currentMove))
             moveNumber ++
         }
-        if (board.isCheck()) return if (board.sideToMove == Colour.WHITE) BLACK_WIN else WHITE_WIN
+        if (board.isCheck()) {
+            val result = if (board.sideToMove == Colour.WHITE) BLACK_WIN else WHITE_WIN
+            if (showIfResultIs == result) {
+                //outln("Challenger wins as " + if (result == WHITE_WIN) "white" else "black")
+                //searcher.engineBoard.makeMove(searcher.currentMove)
+                //outln(searcher.engineBoard.toString())
+            }
+            return result
+        }
 
         return STALEMATE
     }

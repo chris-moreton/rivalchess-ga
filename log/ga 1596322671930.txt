@@ -1,0 +1,45 @@
+Piece Value GA Results
+1 0 
+
+==================================================
+Generation 0 Results
+--------------------------------------------------
+   233    245    344    112    398
+   414    315    276    200    413
+==================================================
+2020-08-01 23:58:00.387
+The Next Generation:
+==================================================
+   233    245    344    112    398
+   233    245    344    115    398
+Current Champion (0):
+   233    245    344    112    398
+Average:
+   233    245    344    113    398 
+--------------------------------------------------
+Challenger wins as black
+6k1/5p1p/7b/2P1p1p1/1P2P3/7b/5P1P/3r3K w - - 1 29
+Challenger wins as white
+r1b2Q2/p1p4k/1qp5/5pNp/5N2/3P2P1/4P1KP/5B1R b - - 2 23
+Challenger wins as black
+7r/8/2p1k3/4pb2/2P4K/r3b1Pp/3R3P/8 w - - 8 36
+Challenger wins as black
+6k1/7p/3p2p1/4pn2/1p4KP/5P2/6q1/6N1 w - - 1 40
+Challenger wins as white
+rnq2b2/pbpk2p1/1p4Q1/4N1B1/3P4/6P1/PP2P1BP/RN2K2n b Q - 3 17
+Challenger wins as white
+6Q1/7R/6k1/8/6P1/4K3/8/B7 b - - 4 61
+Challenger wins as white
+1Q3bN1/pp1k4/8/2pP1B2/1n3N2/8/PP2PK1P/R5R1 b - - 2 30
+Challenger wins as white
+1k6/1Q6/1K6/8/8/8/8/8 b - - 46 73
+Challenger wins as white
+8/8/8/7k/6Q1/5P1p/2PB2PP/6K1 b - - 5 46
+Challenger wins as white
+2Rk4/8/4Q3/8/p5K1/P1P5/1P3P2/8 b - - 1 36
+Challenger wins as black
+5rk1/R1p1bppp/3p1B2/3P4/4p1qK/1P5b/1P5P/8 w - - 2 26
+Challenger wins as black
+5rk1/3nBppp/8/3Pp3/8/1P6/1P3Pq1/5b1K w - - 1 26
+Challenger wins as black
+6k1/5p1p/6p1/8/1p5P/3n1b2/5b2/r4K2 w - - 1 39
