@@ -24,7 +24,7 @@ fun main(args: Array<String>) {
 
     val outFile = File("out.csv")
     outFile.writeText("Generation,")
-    outFile.appendText((0 until data[0].size - 1).toList().joinToString { it.toString() }.toString() + "\n")
+    outFile.appendText((0 until data[0].size - 1).toList().joinToString { "Generation " + it.toString() } + "\n")
     (0 until 5).forEach {
         outFile.appendText(data[it].joinToString { it } + "\n")
     }
