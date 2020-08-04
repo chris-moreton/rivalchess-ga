@@ -1,4 +1,4 @@
-# RivalChess-GA
+# RivalChess Genetic Algorithm
 
 A Generic Algorithm for finding piece values for the Rival Chess engine.
 
@@ -14,7 +14,7 @@ To create a new generation, players are paired up and contribute about half of t
 
 Random mutations can occur.
 
-The next generation then plays in a league and the process continues. 
+The next generation then plays in a league, and the process continues. 
 
 ## To Run
 
