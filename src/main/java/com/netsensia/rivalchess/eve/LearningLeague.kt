@@ -15,6 +15,7 @@ import java.lang.System.currentTimeMillis
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.random.Random
+import kotlin.system.exitProcess
 
 class Player(var pieceValues: IntArray, var points: Int) {
 
@@ -31,18 +32,46 @@ const val SAMPLE_EVERY = 5
 const val MUTATE_EVERY = 15
 const val CHALLENGER_GAMES = 15
 const val RANDOM_SEED = 21
+const val CONTINUE = true
+const val CONTINUE_FILE = "log/ga 1596379423071.txt"
 
 class LearningLeague {
 
     private var longestGame = 0
-    private val file = File("log/ga " + currentTimeMillis() + ".txt")
+    private val file = File(if (CONTINUE) CONTINUE_FILE else "log/ga " + currentTimeMillis() + ".txt")
     private val rng = Random(RANDOM_SEED)
 
     var players: MutableList<Player> = mutableListOf()
 
     fun go() {
-        file.writeText("Piece Value GA Results")
-        createGenerationZero()
+        if (!CONTINUE) {
+            file.writeText("Piece Value GA Results")
+            createGenerationZero()
+        } else {
+            var counter = 0
+            var ready = false
+            File(CONTINUE_FILE).forEachLine { line ->
+                if (line.contains("The Next Generation")) {
+                    counter = 0
+                    ready = true
+                    players = mutableListOf()
+                } else {
+                    counter ++
+                }
+                val playerIndex = counter - 2
+                if (ready && playerIndex in (0 until NUM_PLAYERS)) {
+                    val player = Player(intArrayOf(0,0,0,0,0,0), 0)
+                    var index = 0
+                    line.split(" ").forEach { part ->
+                        if (part.trim() != "") player.pieceValues[index++] = part.trim().toInt()
+                    }
+                    players.add(player)
+                }
+            }
+            players.forEach { player ->
+                println(player.toString())
+            }
+        }
         for (generation in 0 until NUM_GENERATIONS) {
             roundRobin()
             displayResults(players.sortedBy { -it.points }, generation)
