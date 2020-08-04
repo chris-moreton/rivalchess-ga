@@ -44,6 +44,7 @@ class LearningLeague {
     var players: MutableList<Player> = mutableListOf()
 
     fun go() {
+        var currentGenerationNumber = 0
         if (!CONTINUE) {
             file.writeText("Piece Value GA Results")
             createGenerationZero()
@@ -55,6 +56,7 @@ class LearningLeague {
                     counter = 0
                     ready = true
                     players = mutableListOf()
+                    currentGenerationNumber ++
                 } else {
                     counter ++
                 }
@@ -68,11 +70,12 @@ class LearningLeague {
                     players.add(player)
                 }
             }
+            println("Read as generation ${currentGenerationNumber}")
             players.forEach { player ->
                 println(player.toString())
             }
         }
-        for (generation in 0 until NUM_GENERATIONS) {
+        for (generation in currentGenerationNumber until NUM_GENERATIONS) {
             roundRobin()
             displayResults(players.sortedBy { -it.points }, generation)
             createNewGeneration(generation)
