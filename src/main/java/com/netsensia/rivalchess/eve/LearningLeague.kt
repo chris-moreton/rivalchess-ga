@@ -15,7 +15,6 @@ import java.lang.System.currentTimeMillis
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.random.Random
-import kotlin.system.exitProcess
 
 class Player(var pieceValues: IntArray, var points: Int) {
 
@@ -30,7 +29,7 @@ const val NODES_TO_SEARCH = 1000
 const val NUM_GENERATIONS = 20000
 const val SAMPLE_EVERY = 5
 const val MUTATE_EVERY = 15
-const val CHALLENGER_GAMES = 15
+const val CHALLENGER_GAMES = 100
 const val RANDOM_SEED = 21
 const val CONTINUE = true
 const val CONTINUE_FILE = "log/ga 1596379423071.txt"
@@ -192,7 +191,7 @@ class LearningLeague {
 
     private fun challengerVersusRival(sortedPlayers: List<Player>) {
         val classicRival = Player(intArrayOf(100, 390, 390, 595, 1175, 30000), 0)
-        val challenger = Player(sortedPlayers[0].pieceValues.copyOf(), 1000)
+        val challenger = Player(sortedPlayers[0].pieceValues.copyOf(), 0)
         (0 until CHALLENGER_GAMES).toList().parallelStream().forEach {
             val challengerIsWhite = it % 2 == 0
             val whitePlayer = if (challengerIsWhite) challenger else classicRival
