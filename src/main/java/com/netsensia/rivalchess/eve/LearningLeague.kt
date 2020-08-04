@@ -24,12 +24,12 @@ class Player(var pieceValues: IntArray, var points: Int) {
 }
 
 const val GAME_ERROR = -1
-const val NUM_PLAYERS = 48
+const val NUM_PLAYERS = 4
 const val NODES_TO_SEARCH = 1000
 const val NUM_GENERATIONS = 20000
 const val SAMPLE_EVERY = 5
 const val MUTATE_EVERY = 15
-const val CHALLENGER_GAMES = 100
+const val CHALLENGER_GAMES = 25
 const val RANDOM_SEED = 21
 const val CONTINUE = true
 const val CONTINUE_FILE = "log/ga 1596379423071.txt"
@@ -163,6 +163,8 @@ class LearningLeague {
         return newPlayer
     }
 
+    private fun Double.round(decimals: Int = 2): Double = "%.${decimals}f".format(this).toDouble()
+
     private fun displayGenerationResults(sortedPlayers: List<Player>, generation: Int) {
         val current = LocalDateTime.now()
 
@@ -177,8 +179,18 @@ class LearningLeague {
         outln("Current Champion ($generation):")
         outln(sortedPlayers[0].toString())
         outln("Average:")
+        val averages = mutableListOf<Int>(0,0,0,0,0)
+        val ratio = mutableListOf<Double>(0.0,0.0,0.0,0.0,0.0)
         (0..4).forEach { pieceIndex ->
-            out(players.stream().mapToInt{ player -> player.pieceValues[pieceIndex] }.average().asDouble.toInt().toString().padStart(6, ' ') + " ")
+            averages[pieceIndex] = players.stream().mapToInt{ player -> player.pieceValues[pieceIndex] }.average().asDouble.toInt()
+            ratio[pieceIndex] = averages[pieceIndex].toDouble() / averages[0]
+        }
+        (0..4).forEach { pieceIndex ->
+            out(averages[pieceIndex].toString().padStart(6, ' ') + " ")
+        }
+        outln()
+        (0..4).forEach { pieceIndex ->
+            out(ratio[pieceIndex].round().toString().padStart(6, ' ') + " ")
         }
         outln()
         outln("".padStart(50, '-'))
