@@ -24,25 +24,26 @@ class Player(var pieceValues: IntArray, var points: Int) {
 }
 
 const val GAME_ERROR = -1
+const val NUM_PLAYERS = 48
+const val NODES_TO_SEARCH = 1000
+const val NUM_GENERATIONS = 20000
+const val SAMPLE_EVERY = 5
+const val MUTATE_EVERY = 15
+const val CHALLENGER_GAMES = 15
+const val RANDOM_SEED = 21
 
 class LearningLeague {
 
     private var longestGame = 0
-    private val numPlayers = 48
-    private val nodesToSearch = 1000
-    private val numGenerations = 20000
     private val file = File("log/ga " + currentTimeMillis() + ".txt")
-    private val rng = Random(21)
-    private val sampleEvery = 5
-    private val mutateEvery = 15
-    private val challengerGames = 15
+    private val rng = Random(RANDOM_SEED)
 
     var players: MutableList<Player> = mutableListOf()
 
     fun go() {
         file.writeText("Piece Value GA Results")
         createGenerationZero()
-        for (generation in 0 until numGenerations) {
+        for (generation in 0 until NUM_GENERATIONS) {
             roundRobin()
             displayResults(players.sortedBy { -it.points }, generation)
             createNewGeneration(generation)
@@ -51,7 +52,7 @@ class LearningLeague {
 
     private fun roundRobin() {
         outln()
-        (0 until numPlayers).toList().stream().forEach { white ->
+        (0 until NUM_PLAYERS).toList().parallelStream().forEach { white ->
             playAllOpponentsAsWhite(white)
         }
         outln()
@@ -59,15 +60,15 @@ class LearningLeague {
 
     private fun playAllOpponentsAsWhite(white: Int) {
         out("$white ")
-        (0 until numPlayers).toList().parallelStream().forEach { black ->
-            if (white != black && (1..sampleEvery).random(rng) == 1) {
-                when (playGame(players.get(white), players.get(black))) {
-                    WHITE_WIN -> players.get(white).points += 3
-                    BLACK_WIN -> players.get(black).points += 3
+        (0 until NUM_PLAYERS).toList().stream().forEach { black ->
+            if (white != black && (1..SAMPLE_EVERY).random(rng) == 1) {
+                when (playGame(players[white], players[black])) {
+                    WHITE_WIN -> players[white].points += 3
+                    BLACK_WIN -> players[black].points += 3
                     GAME_ERROR -> { }
                     else -> {
-                        players.get(white).points++
-                        players.get(black).points++
+                        players[white].points++
+                        players[black].points++
                     }
                 }
             }
@@ -77,7 +78,7 @@ class LearningLeague {
     private fun getPlayer(totalPoints: Int, sortedPlayers: List<Player>): Player {
         var cum = 0
         val r = (0 until totalPoints).random(rng)
-        for (j in 0 until numPlayers) {
+        for (j in 0 until NUM_PLAYERS) {
             cum += sortedPlayers[j].points
             if (cum >= r) return Player(sortedPlayers[j].pieceValues.copyOf(), 0)
         }
@@ -89,7 +90,7 @@ class LearningLeague {
         val totalPoints: Int = players.map { it.points }.sum()
 
         val newPlayerList = mutableListOf<Player>()
-        for (i in 0 until numPlayers) {
+        for (i in 0 until NUM_PLAYERS) {
             val player1 = getPlayer(totalPoints, sortedPlayers)
             val player2 = getPlayer(totalPoints, sortedPlayers)
 
@@ -104,7 +105,7 @@ class LearningLeague {
         val newPlayer = Player(player.pieceValues.copyOf(), 0)
 
         for (k in 0 until 5) {
-            if ((0 until mutateEvery).random(rng) == 0) {
+            if ((0 until MUTATE_EVERY).random(rng) == 0) {
                 val adjustment = (player.pieceValues[k]).toDouble() * ((1..mutationSize()).random(rng).toDouble() / 100.0)
                 newPlayer.pieceValues[k] += (if ((0..1).random(rng) == 0) adjustment else -adjustment).toInt()
             }
@@ -160,11 +161,11 @@ class LearningLeague {
     private fun challengerVersusRival(sortedPlayers: List<Player>) {
         val classicRival = Player(intArrayOf(100, 390, 390, 595, 1175, 30000), 0)
         val challenger = Player(sortedPlayers[0].pieceValues.copyOf(), 1000)
-        (0 until challengerGames).toList().stream().forEach {
+        (0 until CHALLENGER_GAMES).toList().parallelStream().forEach {
             val challengerIsWhite = it % 2 == 0
             val whitePlayer = if (challengerIsWhite) challenger else classicRival
             val blackPlayer = if (!challengerIsWhite) challenger else classicRival
-            when (playGame(whitePlayer, blackPlayer, if (challengerIsWhite) WHITE_WIN else BLACK_WIN)) {
+            when (playGame(whitePlayer, blackPlayer)) {
                 WHITE_WIN -> whitePlayer.points ++
                 BLACK_WIN -> blackPlayer.points ++
             }
@@ -173,7 +174,7 @@ class LearningLeague {
         outln("Challenger versus Rival: ${challenger.points} - ${classicRival.points}")
     }
 
-    private fun playGame(whitePlayer: Player, blackPlayer: Player, showIfResultIs: Int = -1): Int {
+    private fun playGame(whitePlayer: Player, blackPlayer: Player): Int {
 
         val moveList = mutableListOf<Int>()
         var board = Board.fromFen(FEN_START_POS)
@@ -194,11 +195,15 @@ class LearningLeague {
             board = Board.fromMove(board, getMoveRefFromCompactMove(searcher.currentMove))
             moveNumber ++
         }
-        if (board.isCheck()) {
-            return if (board.sideToMove == Colour.WHITE) BLACK_WIN else WHITE_WIN
-        }
+        return resultWhenNoLegalMoves(board)
+    }
 
-        return STALEMATE
+    private fun resultWhenNoLegalMoves(board: Board): Int {
+        return if (board.isCheck()) {
+            if (board.sideToMove == Colour.WHITE) BLACK_WIN else WHITE_WIN
+        } else {
+            STALEMATE
+        }
     }
 
     private fun getSearcher(player: Player): Search {
@@ -206,7 +211,7 @@ class LearningLeague {
         searcher.useOpeningBook = true
         searcher.setMillisToThink(MAX_SEARCH_MILLIS)
         searcher.setSearchDepth(MAX_SEARCH_DEPTH)
-        searcher.setNodesToSearch(nodesToSearch + (0..nodesToSearch).random(rng))
+        searcher.setNodesToSearch(NODES_TO_SEARCH + (0..NODES_TO_SEARCH).random(rng))
         pieceValues = player.pieceValues
 
         return searcher
@@ -218,7 +223,6 @@ class LearningLeague {
         outln("Generation $generation Results")
         outln("".padStart(50, '-'))
         sortedPlayers.forEach { outln(it.toString()) }
-
     }
 
     private fun out(str: String) {
@@ -236,7 +240,7 @@ class LearningLeague {
     }
 
     private fun createGenerationZero() {
-        for (i in 0 until numPlayers) {
+        for (i in 0 until NUM_PLAYERS) {
             players.add(Player(intArrayOf(
                     50 + (0..500).random(rng),
                     50 + (0..500).random(rng),
