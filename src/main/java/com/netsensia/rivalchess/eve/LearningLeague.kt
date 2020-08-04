@@ -24,12 +24,12 @@ class Player(var pieceValues: IntArray, var points: Int) {
 }
 
 const val GAME_ERROR = -1
-const val NUM_PLAYERS = 4
+const val NUM_PLAYERS = 48
 const val NODES_TO_SEARCH = 1000
 const val NUM_GENERATIONS = 20000
 const val SAMPLE_EVERY = 5
 const val MUTATE_EVERY = 15
-const val CHALLENGER_GAMES = 25
+const val CHALLENGER_GAMES = 24
 const val RANDOM_SEED = 21
 const val CONTINUE = true
 const val CONTINUE_FILE = "log/ga 1596379423071.txt"
