@@ -29,7 +29,7 @@ const val NODES_TO_SEARCH = 1000
 const val NUM_GENERATIONS = 20000
 const val SAMPLE_EVERY = 5
 const val MUTATE_EVERY = 15
-const val CHALLENGER_GAMES = 12
+const val CHALLENGER_GAMES = 48
 const val RANDOM_SEED = 1
 const val CONTINUE = false
 const val CONTINUE_FILE = "log/ga 1596379423071.txt"
@@ -76,7 +76,7 @@ class LearningLeague {
         }
         for (generation in currentGenerationNumber until NUM_GENERATIONS) {
             assessFitness()
-            displayResults(players.sortedBy { -it.points }, generation)
+            displayResults(file, players.sortedBy { -it.points }, generation)
             createNewGeneration(generation)
         }
     }
@@ -86,24 +86,24 @@ class LearningLeague {
     }
 
     private fun rivalChallenge() {
-        outln()
-        (0 until NUM_PLAYERS).toList().parallelStream().forEach { playerNum ->
-            out(".")
-            players[playerNum].points += challengerVersusRival(players[playerNum], CHALLENGER_GAMES)
+        outln(file)
+        players.forEach { player ->
+            out(file, ".")
+            player.points += challengerVersusRival(player, CHALLENGER_GAMES)
         }
-        outln()
+        outln(file)
     }
 
     private fun roundRobin() {
-        outln()
+        outln(file)
         (0 until NUM_PLAYERS).toList().parallelStream().forEach { white ->
             playAllOpponentsAsWhite(white)
         }
-        outln()
+        outln(file)
     }
 
     private fun playAllOpponentsAsWhite(white: Int) {
-        out("$white ")
+        out(file, "$white ")
         (0 until NUM_PLAYERS).toList().stream().forEach { black ->
             if (white != black && (1..SAMPLE_EVERY).random(rng) == 1) {
                 when (playGame(players[white], players[black])) {
@@ -184,14 +184,14 @@ class LearningLeague {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
         val formatted = current.format(formatter)
 
-        outln("".padStart(50, '='))
-        outln(formatted)
-        outln("The Next Generation:")
-        outln("".padStart(50, '='))
-        players.forEach { outln(it.toString()) }
-        outln("Current Champion ($generation):")
-        outln(sortedPlayers[0].toString())
-        outln("Average:")
+        outln(file, "".padStart(50, '='))
+        outln(file, formatted)
+        outln(file, "The Next Generation:")
+        outln(file, "".padStart(50, '='))
+        players.forEach { outln(file, it.toString()) }
+        outln(file, "Current Champion ($generation):")
+        outln(file, sortedPlayers[0].toString())
+        outln(file, "Average:")
         val averages = mutableListOf<Int>(0,0,0,0,0)
         val ratio = mutableListOf<Double>(0.0,0.0,0.0,0.0,0.0)
         (0..4).forEach { pieceIndex ->
@@ -199,19 +199,19 @@ class LearningLeague {
             ratio[pieceIndex] = averages[pieceIndex].toDouble() / averages[0]
         }
         (0..4).forEach { pieceIndex ->
-            out(averages[pieceIndex].toString().padStart(6, ' ') + " ")
+            out(file, averages[pieceIndex].toString().padStart(6, ' ') + " ")
         }
-        outln()
+        outln(file)
         (0..4).forEach { pieceIndex ->
-            out(ratio[pieceIndex].round().toString().padStart(6, ' ') + " ")
+            out(file, ratio[pieceIndex].round().toString().padStart(6, ' ') + " ")
         }
-        outln()
-        outln("".padStart(50, '-'))
+        outln(file)
+        outln(file, "".padStart(50, '-'))
         challengerVersusRival(sortedPlayers[0], CHALLENGER_GAMES)
 
-        outln("".padStart(50, '='))
-        outln("Longest Game: ${longestGame}")
-        outln("".padStart(50, '='))
+        outln(file, "".padStart(50, '='))
+        outln(file, "Longest Game: ${longestGame}")
+        outln(file, "".padStart(50, '='))
     }
 
     private fun challengerVersusRival(player: Player, gamesToPlay: Int): Int {
@@ -222,8 +222,13 @@ class LearningLeague {
             val whitePlayer = if (challengerIsWhite) challenger else classicRival
             val blackPlayer = if (!challengerIsWhite) challenger else classicRival
             when (playGame(whitePlayer, blackPlayer)) {
-                WHITE_WIN -> whitePlayer.points ++
-                BLACK_WIN -> blackPlayer.points ++
+                WHITE_WIN -> whitePlayer.points += 3
+                BLACK_WIN -> blackPlayer.points += 3
+                GAME_ERROR -> { }
+                else -> {
+                    whitePlayer.points++
+                    blackPlayer.points++
+                }
             }
 
         }
@@ -271,28 +276,6 @@ class LearningLeague {
         pieceValues = player.pieceValues
 
         return searcher
-    }
-
-    private fun displayResults(sortedPlayers: List<Player>, generation: Int) {
-        outln()
-        outln("".padStart(50, '='))
-        outln("Generation $generation Results")
-        outln("".padStart(50, '-'))
-        sortedPlayers.forEach { outln("$it (${it.points})") }
-    }
-
-    private fun out(str: String) {
-        file.appendText(str)
-        print(str)
-    }
-
-    private fun outln(str: String) {
-        out(str)
-        out("\n")
-    }
-
-    private fun outln() {
-        outln("")
     }
 
     private fun createGenerationZero() {
