@@ -29,9 +29,9 @@ const val NODES_TO_SEARCH = 1000
 const val NUM_GENERATIONS = 20000
 const val SAMPLE_EVERY = 5
 const val MUTATE_EVERY = 15
-const val CHALLENGER_GAMES = 24
-const val RANDOM_SEED = 21
-const val CONTINUE = true
+const val CHALLENGER_GAMES = 12
+const val RANDOM_SEED = 1
+const val CONTINUE = false
 const val CONTINUE_FILE = "log/ga 1596379423071.txt"
 
 class LearningLeague {
@@ -75,10 +75,23 @@ class LearningLeague {
             }
         }
         for (generation in currentGenerationNumber until NUM_GENERATIONS) {
-            roundRobin()
+            assessFitness()
             displayResults(players.sortedBy { -it.points }, generation)
             createNewGeneration(generation)
         }
+    }
+
+    private fun assessFitness() {
+        rivalChallenge()
+    }
+
+    private fun rivalChallenge() {
+        outln()
+        (0 until NUM_PLAYERS).toList().parallelStream().forEach { playerNum ->
+            out(".")
+            players[playerNum].points += challengerVersusRival(players[playerNum], CHALLENGER_GAMES)
+        }
+        outln()
     }
 
     private fun roundRobin() {
@@ -194,17 +207,17 @@ class LearningLeague {
         }
         outln()
         outln("".padStart(50, '-'))
-        challengerVersusRival(sortedPlayers)
+        challengerVersusRival(sortedPlayers[0], CHALLENGER_GAMES)
 
         outln("".padStart(50, '='))
         outln("Longest Game: ${longestGame}")
         outln("".padStart(50, '='))
     }
 
-    private fun challengerVersusRival(sortedPlayers: List<Player>) {
+    private fun challengerVersusRival(player: Player, gamesToPlay: Int): Int {
         val classicRival = Player(intArrayOf(100, 390, 390, 595, 1175, 30000), 0)
-        val challenger = Player(sortedPlayers[0].pieceValues.copyOf(), 0)
-        (0 until CHALLENGER_GAMES).toList().parallelStream().forEach {
+        val challenger = Player(player.pieceValues.copyOf(), 0)
+        (0 until gamesToPlay).toList().parallelStream().forEach {
             val challengerIsWhite = it % 2 == 0
             val whitePlayer = if (challengerIsWhite) challenger else classicRival
             val blackPlayer = if (!challengerIsWhite) challenger else classicRival
@@ -214,7 +227,7 @@ class LearningLeague {
             }
 
         }
-        outln("Challenger versus Rival: ${challenger.points} - ${classicRival.points}")
+        return challenger.points
     }
 
     private fun playGame(whitePlayer: Player, blackPlayer: Player): Int {
@@ -265,7 +278,7 @@ class LearningLeague {
         outln("".padStart(50, '='))
         outln("Generation $generation Results")
         outln("".padStart(50, '-'))
-        sortedPlayers.forEach { outln(it.toString()) }
+        sortedPlayers.forEach { outln("$it (${it.points})") }
     }
 
     private fun out(str: String) {
