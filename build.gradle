@@ -44,7 +44,7 @@ repositories {
 
 dependencies {
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: '1.7.30'
-    compile group: 'com.netsensia.rivalchess', name: 'rivalchess-engine', version: '30.0.1'
+    compile group: 'com.netsensia.rivalchess', name: 'rivalchess-engine', version: '30.0.2'
     implementation group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-core', version: '1.3.5'
     compile group: 'com.ea.async', name: 'ea-async', version: '1.2.3'
 
