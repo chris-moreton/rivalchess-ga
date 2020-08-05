@@ -31,8 +31,8 @@ const val SAMPLE_EVERY = 5
 const val MUTATE_EVERY = 15
 const val CHALLENGER_GAMES = 48
 const val RANDOM_SEED = 1
-const val CONTINUE = false
-const val CONTINUE_FILE = "log/ga 1596379423071.txt"
+const val CONTINUE = true
+const val CONTINUE_FILE = "log/ga 1596624549148.txt"
 
 class LearningLeague {
 
@@ -87,7 +87,7 @@ class LearningLeague {
 
     private fun rivalChallenge() {
         outln(file)
-        players.forEach { player ->
+        players.parallelStream().forEach { player ->
             out(file, ".")
             player.points += challengerVersusRival(player, CHALLENGER_GAMES)
         }
