@@ -24,14 +24,14 @@ class Player(var pieceValues: IntArray, var points: Int) {
 }
 
 const val GAME_ERROR = -1
-const val NUM_PLAYERS = 48
+const val NUM_PLAYERS = 16
 const val NODES_TO_SEARCH = 1000
 const val NUM_GENERATIONS = 20000
 const val SAMPLE_EVERY = 5
 const val MUTATE_EVERY = 15
-const val CHALLENGER_GAMES = 96
+const val CHALLENGER_GAMES = 16
 const val RANDOM_SEED = 1
-const val CONTINUE = true
+const val CONTINUE = false
 const val CONTINUE_FILE = "log/ga 1596624549148.txt"
 
 class LearningLeague {
@@ -87,7 +87,7 @@ class LearningLeague {
 
     private fun rivalChallenge() {
         outln(file)
-        players.forEach { player ->
+        players.parallelStream().forEach { player ->
             out(file, ".")
             player.points += challengerVersusRival(player, CHALLENGER_GAMES)
         }
@@ -217,22 +217,22 @@ class LearningLeague {
     private fun challengerVersusRival(player: Player, gamesToPlay: Int): Int {
         val classicRival = Player(intArrayOf(100, 390, 390, 595, 1175, 30000), 0)
         val challenger = Player(player.pieceValues.copyOf(), 0)
+        var points = 0
         (0 until gamesToPlay).toList().parallelStream().forEach {
             val challengerIsWhite = it % 2 == 0
             val whitePlayer = if (challengerIsWhite) challenger else classicRival
             val blackPlayer = if (!challengerIsWhite) challenger else classicRival
             when (playGame(whitePlayer, blackPlayer)) {
-                WHITE_WIN -> whitePlayer.points += 3
-                BLACK_WIN -> blackPlayer.points += 3
+                WHITE_WIN -> if (challengerIsWhite) points += 5
+                BLACK_WIN -> if (!challengerIsWhite) points += 5
                 GAME_ERROR -> { }
                 else -> {
-                    whitePlayer.points++
-                    blackPlayer.points++
+                    points ++
                 }
             }
 
         }
-        return challenger.points
+        return points
     }
 
     private fun playGame(whitePlayer: Player, blackPlayer: Player): Int {
