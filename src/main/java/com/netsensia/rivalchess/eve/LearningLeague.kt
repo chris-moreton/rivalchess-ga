@@ -24,12 +24,12 @@ class Player(var pieceValues: IntArray, var points: Int) {
 }
 
 const val GAME_ERROR = -1
-const val NUM_PLAYERS = 16
-const val NODES_TO_SEARCH = 1000
+const val NUM_PLAYERS = 48
+const val NODES_TO_SEARCH = 10000
 const val NUM_GENERATIONS = 20000
 const val SAMPLE_EVERY = 5
 const val MUTATE_EVERY = 15
-const val CHALLENGER_GAMES = 16
+const val CHALLENGER_GAMES = 48
 const val RANDOM_SEED = 1
 const val CONTINUE = false
 const val CONTINUE_FILE = "log/ga 1596624549148.txt"
@@ -37,6 +37,8 @@ const val CONTINUE_FILE = "log/ga 1596624549148.txt"
 class LearningLeague {
 
     private var longestGame = 0
+    private var totalMoves = 0
+    private var totalGames = 0
     private val file = File(if (CONTINUE) CONTINUE_FILE else "log/ga " + currentTimeMillis() + ".txt")
     private val rng = Random(RANDOM_SEED)
 
@@ -192,8 +194,8 @@ class LearningLeague {
         outln(file, "Current Champion ($generation):")
         outln(file, sortedPlayers[0].toString())
         outln(file, "Average:")
-        val averages = mutableListOf<Int>(0,0,0,0,0)
-        val ratio = mutableListOf<Double>(0.0,0.0,0.0,0.0,0.0)
+        val averages = mutableListOf(0,0,0,0,0)
+        val ratio = mutableListOf(0.0,0.0,0.0,0.0,0.0)
         (0..4).forEach { pieceIndex ->
             averages[pieceIndex] = players.stream().mapToInt{ player -> player.pieceValues[pieceIndex] }.average().asDouble.toInt()
             ratio[pieceIndex] = averages[pieceIndex].toDouble() / averages[0]
@@ -207,10 +209,10 @@ class LearningLeague {
         }
         outln(file)
         outln(file, "".padStart(50, '-'))
-        challengerVersusRival(sortedPlayers[0], CHALLENGER_GAMES)
+        outln(file, "Longest Game: ${longestGame} moves")
+        outln(file, "Average Game: ${(totalMoves / totalGames.toDouble()).round()} moves")
+        outln(file, "Games Played: $totalGames")
 
-        outln(file, "".padStart(50, '='))
-        outln(file, "Longest Game: ${longestGame}")
         outln(file, "".padStart(50, '='))
     }
 
@@ -223,8 +225,8 @@ class LearningLeague {
             val whitePlayer = if (challengerIsWhite) challenger else classicRival
             val blackPlayer = if (!challengerIsWhite) challenger else classicRival
             when (playGame(whitePlayer, blackPlayer)) {
-                WHITE_WIN -> if (challengerIsWhite) points += 5
-                BLACK_WIN -> if (!challengerIsWhite) points += 5
+                WHITE_WIN -> if (challengerIsWhite) points += 3
+                BLACK_WIN -> if (!challengerIsWhite) points += 3
                 GAME_ERROR -> { }
                 else -> {
                     points ++
@@ -239,10 +241,12 @@ class LearningLeague {
 
         val moveList = mutableListOf<Int>()
         var board = Board.fromFen(FEN_START_POS)
+        totalGames ++
 
         var moveNumber = 1
         while (board.getLegalMoves().isNotEmpty()) {
             if (moveNumber > longestGame) longestGame = moveNumber
+            totalMoves ++
             val searcher = getSearcher(if (moveNumber % 2 == 1) whitePlayer else blackPlayer)
 
             moveList.forEach { searcher.makeMove(it) }
