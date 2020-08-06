@@ -45,42 +45,52 @@ class LearningLeague {
     var players: MutableList<Player> = mutableListOf()
 
     fun go() {
+        for (generation in prepareStartingGeneration() until NUM_GENERATIONS) {
+            assessFitness()
+            displayResults(file, players.sortedBy { -it.points }, generation)
+            createNewGeneration(generation)
+        }
+    }
+
+    private fun prepareStartingGeneration(): Int {
         var currentGenerationNumber = 0
         if (!CONTINUE) {
             file.writeText("Piece Value GA Results")
             createGenerationZero()
         } else {
-            var counter = 0
-            var ready = false
-            File(CONTINUE_FILE).forEachLine { line ->
-                if (line.contains("The Next Generation")) {
-                    counter = 0
-                    ready = true
-                    players = mutableListOf()
-                    currentGenerationNumber ++
-                } else {
-                    counter ++
-                }
-                val playerIndex = counter - 2
-                if (ready && playerIndex in (0 until NUM_PLAYERS)) {
-                    val player = Player(intArrayOf(0,0,0,0,0,0), 0)
-                    var index = 0
-                    line.split(" ").forEach { part ->
-                        if (part.trim() != "") player.pieceValues[index++] = part.trim().toInt()
-                    }
-                    players.add(player)
-                }
+            currentGenerationNumber = readGenerationFromLog(currentGenerationNumber)
+        }
+        return currentGenerationNumber
+    }
+
+    private fun readGenerationFromLog(currentGenerationNumber: Int): Int {
+        var currentGenerationNumber1 = currentGenerationNumber
+        var counter = 0
+        var ready = false
+        File(CONTINUE_FILE).forEachLine { line ->
+            if (line.contains("The Next Generation")) {
+                counter = 0
+                ready = true
+                players = mutableListOf()
+                currentGenerationNumber1++
+            } else {
+                counter++
             }
-            println("Read as generation ${currentGenerationNumber}")
-            players.forEach { player ->
-                println(player.toString())
+            val playerIndex = counter - 2
+            if (ready && playerIndex in (0 until NUM_PLAYERS)) {
+                val player = Player(intArrayOf(0, 0, 0, 0, 0, 0), 0)
+                var index = 0
+                line.split(" ").forEach { part ->
+                    if (part.trim() != "") player.pieceValues[index++] = part.trim().toInt()
+                }
+                players.add(player)
             }
         }
-        for (generation in currentGenerationNumber until NUM_GENERATIONS) {
-            assessFitness()
-            displayResults(file, players.sortedBy { -it.points }, generation)
-            createNewGeneration(generation)
+        println("Read as generation ${currentGenerationNumber1}")
+        players.forEach { player ->
+            println(player.toString())
         }
+        return currentGenerationNumber1
     }
 
     private fun assessFitness() {
